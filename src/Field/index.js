@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import elements from './elements.json';
+import Preview from "./Preview";
 
 const w = 10;
 const h = 20;
@@ -13,7 +14,7 @@ const getNewElement = () => {
   return JSON.parse(nextElem);
 }
 
-const moveElementDown = (prev, state, setState, setGameOver) => {
+const moveElementDown = (prev, state, setState, setGameOver, nextElement, setNextElement) => {
   const obstacleBelow = prev.some((row) => row.some((col) =>
     col[0] >= h - 1 ||
     (state[col[0] + 1][col[1]] && col[2])
@@ -44,26 +45,29 @@ const moveElementDown = (prev, state, setState, setGameOver) => {
     if (state[0].some(s => s) || state[1].some(s => s) || state[2].some(s => s)) {
       setGameOver(true);
     }
-    return getNewElement()
+    setNextElement(getNewElement());
+    return [nextElement, true];
   }
-  return prev.map(row => row.map(col => [col[0] + 1, col[1], col[2], col[3]]));
+  return [prev.map(row => row.map(col => [col[0] + 1, col[1], col[2], col[3]])), false];
 }
 
-const initialElement = getNewElement()
+const initialElement = getNewElement();
+const initialNextElement = getNewElement();
 const initialState = height.map(_ => [...width.map(_ => false)])
 
 const Field = () => {
   // TODO: allow configuring field and initial level
   const [state, setState] = useState(initialState);
-  // TODO: add preview of next elements, add element hold
   const [currentElement, setCurrentElement] = useState(initialElement)
   const [gameOver, setGameOver] = useState(false);
+  const [holdElement, setHoldElement] = useState(null);
+  const [nextElement, setNextElement] = useState(initialNextElement)
 
   useEffect(() => {
     const handler = () => {
-      // TODO: remove full lines, calculate score
+      // TODO: calculate score
       if (!gameOver) {
-        setCurrentElement(prev => moveElementDown(prev, state, setState, setGameOver));
+        setCurrentElement(prev => moveElementDown(prev, state, setState, setGameOver, nextElement, setNextElement, true)[0]);
       }
     }
     // TODO: speed up game depending on level
@@ -72,7 +76,7 @@ const Field = () => {
     return () => {
       clearInterval(intervalId);
     }
-  }, [state, gameOver]);
+  }, [state, gameOver, nextElement]);
 
   useEffect(() => {
     const handler = e => {
@@ -107,9 +111,15 @@ const Field = () => {
           break;
         case 'ArrowDown':
           setCurrentElement(prev => {
-            const first = moveElementDown(prev, state, setState)
-            const second = moveElementDown(first, state, setState)
-            return moveElementDown(second, state, setState)
+            const [first, isNew] = moveElementDown(prev, state, setState, setGameOver, nextElement, setNextElement);
+            if (isNew) {
+              return first;
+            }
+            const [second, isNewElem] = moveElementDown(first, state, setState, setGameOver, nextElement, setNextElement);
+            if (isNewElem) {
+              return second;
+            }
+            return moveElementDown(second, state, setState, setGameOver, nextElement, setNextElement)[0];
           })
           break;
         case 'ArrowUp':
@@ -147,6 +157,22 @@ const Field = () => {
             return newElem;
           })
           break;
+        case 'Shift':
+          setCurrentElement(prev => {
+            const prevTopLeftCoords = prev[0][0];
+            if (!holdElement) {
+              setHoldElement(prev);
+              let newElement = nextElement;
+              newElement = newElement.map((r, ri) => r.map((c, ci) => [prevTopLeftCoords[0] + ri, prevTopLeftCoords[1] + ci, c[2], c[3]]));
+              setNextElement(getNewElement())
+              return newElement
+            }
+            let newElement = holdElement;
+            newElement = newElement.map((r, ri) => r.map((c, ci) => [prevTopLeftCoords[0] + ri, prevTopLeftCoords[1] + ci, c[2], c[3]]));
+            setHoldElement(prev);
+            return newElement;
+          })
+          break;
         default:
           break;
       }
@@ -156,44 +182,53 @@ const Field = () => {
     return () => {
       document.removeEventListener('keydown', handler)
     }
-  }, [state, gameOver])
+  }, [state, gameOver, holdElement, nextElement]);
 
   return (
-    <div className="relative flex flex-col gap-0.5">
-      {gameOver ? (
-        <div className="absolute top-0 bottom-0 left-0 right-0 backdrop-blur-sm text-3xl flex items-center justify-center flex-col gap-2">
-          Game over
-          <button
-            className="border border-amber-800 rounded px-4 py-1"
-            onClick={() => {
-              setGameOver(false);
-              setCurrentElement(getNewElement())
-              setState(height.map(_ => [...width.map(_ => false)]))
-            }}
-          >
-            Restart
-          </button>
-        </div>
-      ) : null}
-      {state.map((row, i) => (
-        <div key={`row-${i}`} className={`flex gap-0.5 ${i === 1 || i === 0 ? 'hidden': ''}`}>
-          {row.map((col, j) => {
-            let elemPart;
-            for (let k = 0; k < currentElement.length; k++) {
-              elemPart = currentElement[k].find(c => c[0] === i && c[1] === j)
-              if (elemPart) {
-                break;
+    <div className="flex gap-4">
+      <div className="flex flex-col gap-4 w-40">
+        <Preview element={holdElement} title="HOLD"/>
+        <div className="flex-1 bg-amber-50 border border-amber-800">score</div>
+      </div>
+      <div className="relative flex flex-col gap-0.5">
+        {gameOver ? (
+          <div className="absolute top-0 bottom-0 left-0 right-0 backdrop-blur-sm text-3xl flex items-center justify-center flex-col gap-2">
+            Game over
+            <button
+              className="border border-amber-800 rounded px-4 py-1"
+              onClick={() => {
+                setGameOver(false);
+                setHoldElement(null);
+                setCurrentElement(getNewElement());
+                setNextElement(getNewElement());
+                setState(height.map(_ => [...width.map(_ => false)]));
+              }}
+            >
+              Restart
+            </button>
+          </div>
+        ) : null}
+        {state.map((row, i) => (
+          <div key={`row-${i}`} className={`flex gap-0.5 ${i === 1 || i === 0 ? 'hidden': ''}`}>
+            {row.map((col, j) => {
+              let elemPart;
+              for (let k = 0; k < currentElement.length; k++) {
+                elemPart = currentElement[k].find(c => c[0] === i && c[1] === j)
+                if (elemPart) {
+                  break;
+                }
               }
-            }
-            return (
-              <div
-                key={`col-${i}-${j}`}
-                className={`w-7 h-7 border border-amber-800 ${elemPart?.[2] ? 'border-2 bg-amber-600' : ''} ${state[i][j] ? 'bg-amber-800' : ''}`}
-              />
-            )
-          })}
-        </div>
-      ))}
+              return (
+                <div
+                  key={`col-${i}-${j}`}
+                  className={`w-7 h-7 border border-amber-800 ${elemPart?.[2] ? 'border-2 bg-amber-600' : ''} ${state[i][j] ? 'bg-amber-800' : ''}`}
+                />
+              )
+            })}
+          </div>
+        ))}
+      </div>
+      <Preview element={nextElement} title="NEXT ELEMENT"/>
     </div>
   );
 };
