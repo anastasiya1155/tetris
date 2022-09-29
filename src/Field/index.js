@@ -5,6 +5,10 @@ import Preview from "./Preview";
 const w = 10;
 const h = 20;
 
+const levels = [
+  0, 5, 12, 20, 30, 45, 65, 90
+];
+
 const width = Array.from(new Array(w).keys());
 const height = Array.from(new Array(h).keys());
 
@@ -14,7 +18,7 @@ const getNewElement = () => {
   return JSON.parse(nextElem);
 }
 
-const moveElementDown = (prev, state, setState, setGameOver, nextElement, setNextElement) => {
+const moveElementDown = (prev, state, setState, setGameOver, nextElement, setNextElement, setScore, setLinesRemoved, level) => {
   const obstacleBelow = prev.some((row) => row.some((col) =>
     col[0] >= h - 1 ||
     (state[col[0] + 1][col[1]] && col[2])
@@ -35,7 +39,10 @@ const moveElementDown = (prev, state, setState, setGameOver, nextElement, setNex
           newRows.push(row)
         }
       })
-      let diff = prevState.length - newRows.length
+      const diffAfterFilter = prevState.length - newRows.length;
+      setLinesRemoved(p => p + diffAfterFilter);
+      setScore(p => p + (diffAfterFilter * 1000 * level));
+      let diff = diffAfterFilter;
       while (diff) {
         newRows.unshift(width.map(_ => false));
         diff = prevState.length - newRows.length;
@@ -61,22 +68,34 @@ const Field = () => {
   const [currentElement, setCurrentElement] = useState(initialElement)
   const [gameOver, setGameOver] = useState(false);
   const [holdElement, setHoldElement] = useState(null);
-  const [nextElement, setNextElement] = useState(initialNextElement)
+  const [nextElement, setNextElement] = useState(initialNextElement);
+  const [score, setScore] = useState(0);
+  const [linesRemoved, setLinesRemoved] = useState(0);
+  const [level, setLevel] = useState(1);
 
   useEffect(() => {
     const handler = () => {
-      // TODO: calculate score
       if (!gameOver) {
-        setCurrentElement(prev => moveElementDown(prev, state, setState, setGameOver, nextElement, setNextElement, true)[0]);
+        setCurrentElement(prev => moveElementDown(prev, state, setState, setGameOver, nextElement, setNextElement, setScore, setLinesRemoved, level)[0]);
       }
     }
-    // TODO: speed up game depending on level
-    const intervalId = setInterval(handler, 500);
+    const intervalId = setInterval(handler, 900 - (level * 50));
 
     return () => {
       clearInterval(intervalId);
     }
-  }, [state, gameOver, nextElement]);
+  }, [state, gameOver, nextElement, level]);
+
+  useEffect(() => {
+    let levelByScore
+    for (let i = levels.length - 1; i >= 0; i--) {
+      if (levels[i] <= linesRemoved) {
+        levelByScore = i;
+        break;
+      }
+    }
+    setLevel(levelByScore >= 0 ? levelByScore + 1 : levels.length + 1);
+  }, [linesRemoved])
 
   useEffect(() => {
     const handler = e => {
@@ -110,16 +129,17 @@ const Field = () => {
           })
           break;
         case 'ArrowDown':
+          setScore(prev => prev + 100);
           setCurrentElement(prev => {
-            const [first, isNew] = moveElementDown(prev, state, setState, setGameOver, nextElement, setNextElement);
+            const [first, isNew] = moveElementDown(prev, state, setState, setGameOver, nextElement, setNextElement, setScore, setLinesRemoved, level);
             if (isNew) {
               return first;
             }
-            const [second, isNewElem] = moveElementDown(first, state, setState, setGameOver, nextElement, setNextElement);
+            const [second, isNewElem] = moveElementDown(first, state, setState, setGameOver, nextElement, setNextElement, setScore, setLinesRemoved, level);
             if (isNewElem) {
               return second;
             }
-            return moveElementDown(second, state, setState, setGameOver, nextElement, setNextElement)[0];
+            return moveElementDown(second, state, setState, setGameOver, nextElement, setNextElement, setScore, setLinesRemoved, level)[0];
           })
           break;
         case 'ArrowUp':
@@ -182,13 +202,25 @@ const Field = () => {
     return () => {
       document.removeEventListener('keydown', handler)
     }
-  }, [state, gameOver, holdElement, nextElement]);
+  }, [state, gameOver, holdElement, nextElement, level]);
 
   return (
     <div className="flex gap-4">
       <div className="flex flex-col gap-4 w-40">
         <Preview element={holdElement} title="HOLD"/>
-        <div className="flex-1 bg-amber-50 border border-amber-800">score</div>
+        <div className="flex-1 bg-amber-50 border border-amber-800 p-2 text-center">
+          <p>Lines removed:</p>
+          <p>{linesRemoved}</p>
+          <br/>
+          <p>Score:</p>
+          <p>{score}</p>
+          <br/>
+          <p>Level:</p>
+          <p>{level}</p>
+          <br/>
+          <p>Game speed:</p>
+          <p>{1000 - (900 - (level * 50))}</p>
+        </div>
       </div>
       <div className="relative flex flex-col gap-0.5">
         {gameOver ? (
