@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import elements from './elements.json';
 
 const w = 10;
 const h = 20;
@@ -6,10 +7,11 @@ const h = 20;
 const width = Array.from(new Array(w).keys());
 const height = Array.from(new Array(h).keys());
 
-const getNewElement = () => [
-  [[0, 3, false, 1], [0, 4, true, 2], [0, 5, false, 3]],
-  [[1, 3, true, 4], [1, 4, true, 5], [1, 5, true, 6]]
-]
+const getNewElement = () => {
+  const randIndex = Math.floor((Math.random())*(Object.keys(elements).length - 1));
+  const nextElem = JSON.stringify(Object.values(elements)[randIndex])
+  return JSON.parse(nextElem);
+}
 
 const moveElementDown = (prev, state, setState, setGameOver) => {
   const obstacleBelow = prev.some((row) => row.some((col) =>
@@ -32,17 +34,24 @@ const moveElementDown = (prev, state, setState, setGameOver) => {
   return prev.map(row => row.map(col => [col[0] + 1, col[1], col[2], col[3]]));
 }
 
+const initialElement = getNewElement()
+const initialState = height.map(_ => [...width.map(_ => false)])
+
 const Field = () => {
-  const [state, setState] = useState(height.map(_ => [...width.map(_ => false)]));
-  const [currentElement, setCurrentElement] = useState(getNewElement())
+  // TODO: allow configuring field and initial level
+  const [state, setState] = useState(initialState);
+  // TODO: add preview of next elements, add element hold
+  const [currentElement, setCurrentElement] = useState(initialElement)
   const [gameOver, setGameOver] = useState(false);
 
   useEffect(() => {
     const handler = () => {
+      // TODO: remove full lines, calculate score
       if (!gameOver) {
         setCurrentElement(prev => moveElementDown(prev, state, setState, setGameOver));
       }
     }
+    // TODO: speed up game depending on level
     const intervalId = setInterval(handler, 500);
 
     return () => {
@@ -56,7 +65,6 @@ const Field = () => {
         return;
       }
       const key = e.key;
-      console.log(key);
       switch (key) {
         case 'ArrowLeft':
           setCurrentElement(prev => {
@@ -91,6 +99,7 @@ const Field = () => {
           break;
         case 'ArrowUp':
           setCurrentElement(prev => {
+            // TODO: limit rotation if there are obstacles or move element away
             // const obstacleLeft = prev.some((row) => row.some((col) =>
             //   col[1] <= 0 ||
             //   (state[col[0]][col[1] - 1] && col[2])
