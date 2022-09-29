@@ -26,6 +26,21 @@ const moveElementDown = (prev, state, setState, setGameOver) => {
       }))
       return newState;
     });
+    setState(prevState => {
+      const newRows = [];
+      prevState.forEach(row => {
+        const isRowFull = row.every(b => !!b);
+        if (!isRowFull) {
+          newRows.push(row)
+        }
+      })
+      let diff = prevState.length - newRows.length
+      while (diff) {
+        newRows.unshift(width.map(_ => false));
+        diff = prevState.length - newRows.length;
+      }
+      return newRows;
+    })
     if (state[0].some(s => s) || state[1].some(s => s) || state[2].some(s => s)) {
       setGameOver(true);
     }
