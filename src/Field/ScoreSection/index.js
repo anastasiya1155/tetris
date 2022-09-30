@@ -2,7 +2,7 @@ import React from 'react';
 
 const ScoreSection = ({linesRemoved, score, level, speed}) => {
   return (
-    <div className="flex-1 bg-amber-50 border border-amber-800 p-2 text-center">
+    <div className="flex-1 bg-amber-100 border border-amber-800 p-2 text-center">
       <p>Lines removed:</p>
       <p>{linesRemoved}</p>
       <br/>

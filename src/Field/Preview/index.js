@@ -2,7 +2,7 @@ import React from 'react';
 
 const Preview = ({block, title}) => {
   return (
-    <div className="bg-amber-50 p-2 border border-amber-800 flex flex-col gap-1 items-center">
+    <div className="bg-amber-100 p-2 border border-amber-800 flex flex-col gap-1 items-center">
       <p className="text-center">{title}</p>
       <div className="flex flex-col gap-1 items-center justify-center min-h-[9rem]">
         <div className="flex flex-col gap-0.5">
