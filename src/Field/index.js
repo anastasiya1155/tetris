@@ -30,6 +30,7 @@ const Field = () => {
   const [gameOver, setGameOver] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
   const [isExtended, setIsExtended] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [holdBlock, setHoldBlock] = useState(null);
   const [nextBlock, setNextBlock] = useState(initialNextBlock);
   const [score, setScore] = useState(0);
@@ -67,11 +68,14 @@ const Field = () => {
       }
     }
     const intervalId = setInterval(handler, 900 - (level * 50));
+    if (isPaused) {
+      clearInterval(intervalId);
+    }
 
     return () => {
       clearInterval(intervalId);
     }
-  }, [gameOver, level, gameStarted, moveBlockDown]);
+  }, [gameOver, level, gameStarted, moveBlockDown, isPaused]);
 
   useEffect(() => {
     let levelByScore
@@ -90,6 +94,12 @@ const Field = () => {
         return;
       }
       const key = e.key;
+      if (key === "Enter") {
+        setIsPaused(prev => !prev);
+      }
+      if (isPaused) {
+        return;
+      }
       switch (key) {
         // TODO: add space handler (drops immediately)
         case 'ArrowLeft':
@@ -135,7 +145,7 @@ const Field = () => {
     return () => {
       document.removeEventListener('keydown', handler)
     }
-  }, [state, gameOver, holdBlock, nextBlock, gameStarted, fieldWidth, fieldHeight, isExtended, moveBlockDown]);
+  }, [state, gameOver, holdBlock, nextBlock, gameStarted, fieldWidth, fieldHeight, isExtended, moveBlockDown, isPaused]);
 
   const handleStart = useCallback(() => {
     setGameOver(false);
@@ -155,53 +165,56 @@ const Field = () => {
         <ScoreSection level={level} score={score} linesRemoved={linesRemoved} speed={1000 - (900 - (level * 50))}/>
       </div>
       <div className="relative flex flex-col gap-0.5">
-        {gameOver || !gameStarted ? (
+        {gameOver || !gameStarted || isPaused ? (
           <div className="absolute top-0 bottom-0 left-0 right-0 backdrop-blur-sm text-3xl flex items-center justify-center flex-col gap-2">
-            <div className="w-32 flex flex-col gap-2">
-              {gameOver && <p className="text-2xl">Game over</p>}
-              <label className="text-lg">
-                Level:
-                <select
-                  value={level}
-                  onChange={e => setLevel(Number(e.target.value))}
-                  className="w-full border border-amber-800 rounded px-1 text-lg"
+            {(gameOver || !gameStarted) && (
+              <>
+                <div className="w-32 flex flex-col gap-2">
+                  {gameOver && <p className="text-2xl">Game over</p>}
+                  <label className="text-lg">
+                    Level:
+                    <select
+                      value={level}
+                      onChange={e => setLevel(Number(e.target.value))}
+                      className="w-full border border-amber-800 rounded px-1 text-lg"
+                    >
+                      {levels.map((_, i) => (<option key={i}>{i + 1}</option>))}
+                    </select>
+                  </label>
+                  <Input
+                    type="number"
+                    name="width"
+                    value={fieldWidth}
+                    onChange={e => setFieldWidth(Number(e.target.value))}
+                    min={7}
+                    max={30}
+                    label="Field width:"
+                  />
+                  <Input
+                    type="number"
+                    name="height"
+                    value={fieldHeight}
+                    onChange={e => setFieldHeight(Number(e.target.value))}
+                    min={10}
+                    max={60}
+                    label="Field height:"
+                  />
+                  <Input
+                    label="Extended:"
+                    type="checkbox"
+                    name="isExtended"
+                    className="ml-2"
+                    checked={isExtended}
+                    onChange={e => setIsExtended(e.target.checked)}
+                  />
+                </div>
+                <button
+                  className="border border-amber-800 rounded px-4 py-1 bg-white"
+                  onClick={handleStart}
                 >
-                  {levels.map((_, i) => (<option key={i}>{i}</option>))}
-                </select>
-              </label>
-              <Input
-                type="number"
-                name="width"
-                value={fieldWidth}
-                onChange={e => setFieldWidth(Number(e.target.value))}
-                min={7}
-                max={30}
-                label="Field width:"
-              />
-              <Input
-                type="number"
-                name="height"
-                value={fieldHeight}
-                onChange={e => setFieldHeight(Number(e.target.value))}
-                min={10}
-                max={60}
-                label="Field height:"
-              />
-              <Input
-                label="Extended:"
-                type="checkbox"
-                name="isExtended"
-                className="ml-2"
-                checked={isExtended}
-                onChange={e => setIsExtended(e.target.checked)}
-              />
-            </div>
-            <button
-              className="border border-amber-800 rounded px-4 py-1 bg-white"
-              onClick={handleStart}
-            >
-              Start
-            </button>
+                  Start
+                </button>
+              </>)}
           </div>
         ) : null}
         {state.map((row, i) => (
@@ -226,8 +239,21 @@ const Field = () => {
           </div>
         ))}
       </div>
-      <div className="w-40">
+      <div className="w-40 flex flex-col gap-4">
         <Preview block={nextBlock} title="NEXT BLOCK"/>
+        <div className=" w-40 h-40 border border-amber-800 bg-amber-100 flex flex-col gap-2 items-center justify-center">
+          <p>{isPaused ? 'Resume': 'Pause'}</p>
+          <button
+            className="w-24 h-24 bg-amber-50 text-5xl bolder rounded border border-amber-800 flex items-center focus:outline-none justify-center"
+            onClick={(e) => {
+              console.log('here')
+              setIsPaused(prev => !prev)
+              e.target.blur();
+            }}
+          >
+            {isPaused ? "▶" : "| |"}
+          </button>
+        </div>
       </div>
     </div>
   );
