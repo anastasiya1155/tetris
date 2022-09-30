@@ -2,6 +2,10 @@ import React, { useCallback, useEffect, useState } from 'react';
 import blocks from './blocks.json';
 import Preview from "./Preview";
 import { getNSizedArray } from "../utils/basicUtils";
+import Input from "../Input";
+import ScoreSection from "./ScoreSection";
+import { isObstacleBelow, moveDown, moveLeft, moveRight, placeBlockAt, rotateBlock } from "../utils/blockUtils";
+import { addBlockToField, isFieldFull, removeFullRowsFromField } from "../utils/fieldUtils";
 
 const levels = [
   0, 5, 12, 20, 30, 40, 50, 60, 70, 80, 90, 100
@@ -14,58 +18,6 @@ const getNewBlock = (isExtended) => {
   const randIndex = Math.floor((Math.random())*(isExtended ? Object.keys(blocks).length - 1 : 18));
   const nextBlock= JSON.stringify(Object.values(blocks)[randIndex])
   return JSON.parse(nextBlock);
-}
-
-const moveBlockDown = (
-  prev,
-  state,
-  setState,
-  setGameOver,
-  nextBlock,
-  setNextBlock,
-  setScore,
-  setLinesRemoved,
-  level,
-  fieldHeight,
-  isExtended,
-) => {
-  const obstacleBelow = prev.some((row) => row.some((col) =>
-    col[0] >= fieldHeight - 1 ||
-    (state[col[0] + 1][col[1]] && col[2])
-  ))
-  if (obstacleBelow) {
-    setState(prevState => {
-      const newState = [...prevState.map(row => [...row])]
-      prev.forEach((row) => row.forEach((col) => {
-        newState[col[0]][col[1]] = newState[col[0]][col[1]] || col[2]
-      }))
-      return newState;
-    });
-    setState(prevState => {
-      const newRows = [];
-      prevState.forEach(row => {
-        const isRowFull = row.every(b => !!b);
-        if (!isRowFull) {
-          newRows.push(row)
-        }
-      })
-      const diffAfterFilter = prevState.length - newRows.length;
-      setLinesRemoved(p => p + diffAfterFilter);
-      setScore(p => p + (diffAfterFilter * 1000 * level));
-      let diff = diffAfterFilter;
-      while (diff) {
-        newRows.unshift(width.map(_ => false));
-        diff = prevState.length - newRows.length;
-      }
-      return newRows;
-    })
-    if (state[0].some(s => s) || state[1].some(s => s) || state[2].some(s => s)) {
-      setGameOver(true);
-    }
-    setNextBlock(getNewBlock(isExtended));
-    return [nextBlock, true];
-  }
-  return [prev.map(row => row.map(col => [col[0] + 1, col[1], col[2], col[3]])), false];
 }
 
 const initialBlock = getNewBlock();
@@ -86,10 +38,31 @@ const Field = () => {
   const [fieldWidth, setFieldWidth] = useState(10);
   const [fieldHeight, setFieldHeight] = useState(20);
 
+  const moveBlockDown = useCallback((
+    block,
+  ) => {
+    const obstacleBelow = isObstacleBelow(block, state, fieldHeight);
+    if (obstacleBelow) {
+      setState(prevState => addBlockToField(block, prevState));
+      setState(prevState => {
+        const { newState, diff } = removeFullRowsFromField(prevState);
+        setLinesRemoved(p => p + diff);
+        setScore(p => p + (diff * 1000 * level));
+        return newState;
+      })
+      if (isFieldFull(state)) {
+        setGameOver(true);
+      }
+      setNextBlock(getNewBlock(isExtended));
+      return [nextBlock, true];
+    }
+    return [moveDown(block), false];
+  }, [state, nextBlock, level, fieldHeight, isExtended])
+
   useEffect(() => {
     const handler = () => {
       if (!gameOver && gameStarted) {
-        setCurrentBlock(prev => moveBlockDown(prev, state, setState, setGameOver, nextBlock, setNextBlock, setScore, setLinesRemoved, level, fieldHeight, isExtended)[0]);
+        setCurrentBlock(prev => moveBlockDown(prev)[0]);
       }
     }
     const intervalId = setInterval(handler, 900 - (level * 50));
@@ -97,7 +70,7 @@ const Field = () => {
     return () => {
       clearInterval(intervalId);
     }
-  }, [state, gameOver, nextBlock, level, gameStarted, fieldHeight, isExtended]);
+  }, [gameOver, level, gameStarted, moveBlockDown]);
 
   useEffect(() => {
     let levelByScore
@@ -119,102 +92,35 @@ const Field = () => {
       switch (key) {
         // TODO: add space handler (drops immediately)
         case 'ArrowLeft':
-          setCurrentBlock(prev => {
-            const obstacleLeft = prev.some((row) => row.some((col) =>
-              col[1] <= 0 ||
-              (state[col[0]][col[1] - 1] && col[2])
-            ));
-            if (!obstacleLeft) {
-              return prev.map(row => row.map(col => [col[0], col[1] - 1, col[2], col[3]]))
-            }
-            return prev;
-          })
+          setCurrentBlock(prev => moveLeft(prev, state));
           break;
         case 'ArrowRight':
-          setCurrentBlock(prev => {
-            const obstacleRight = prev.some((row) => row.some((col) =>
-              col[1] >= fieldWidth - 1 ||
-              (state[col[0]][col[1] + 1] && col[2])
-            ));
-            if (!obstacleRight) {
-              return prev.map(row => row.map(col => [col[0], col[1] + 1, col[2], col[3]]))
-            }
-            return prev;
-          })
+          setCurrentBlock(prev => moveRight(prev, state, fieldWidth));
           break;
         case 'ArrowDown':
           setScore(prev => prev + 100);
           setCurrentBlock(prev => {
-            const [first, isNew] = moveBlockDown(prev, state, setState, setGameOver, nextBlock, setNextBlock, setScore, setLinesRemoved, level, fieldHeight, isExtended);
+            const [first, isNew] = moveBlockDown(prev);
             if (isNew) {
               return first;
             }
-            const [second, isNewB] = moveBlockDown(first, state, setState, setGameOver, nextBlock, setNextBlock, setScore, setLinesRemoved, level, fieldHeight, isExtended);
+            const [second, isNewB] = moveBlockDown(first);
             if (isNewB) {
               return second;
             }
-            return moveBlockDown(second, state, setState, setGameOver, nextBlock, setNextBlock, setScore, setLinesRemoved, level, fieldHeight, isExtended)[0];
+            return moveBlockDown(second)[0];
           })
           break;
         case 'ArrowUp':
-          setCurrentBlock(prev => {
-            const prevHeight = prev.length;
-            const prevWidth = prev[0].length;
-            const isWide = prevWidth - prevHeight > 0;
-            const sidesDiff = Math.abs(prevWidth - prevHeight);
-            const diffRange = sidesDiff ? getNSizedArray(sidesDiff, true) : [];
-            const obstacleLeft = prev.some((row) => row.some((col) =>
-              (!isWide && diffRange.some(r => state[col[0]][col[1] - r]) && col[2])
-            ));
-            const obstacleRight = prev.some((row) => row.some((col) =>
-              (!isWide && col[1] >= fieldWidth - 1) ||
-              (!isWide && diffRange.some(r => state[col[0]][col[1] + r]) && col[2])
-            ));
-            const obstacleBelow = prev.some((row) => row.some((col) =>
-              (isWide && diffRange.some(r => col[0] + r >= fieldHeight - 1)) ||
-              (isWide && diffRange.some(r => state[col[0] + r]?.[col[1]]) && col[2])
-            ));
-            const newR = getNSizedArray(prevWidth);
-            const newC = getNSizedArray(prevHeight);
-
-            const getNewColPosition = (c) => prev[0][0][1] + c + (obstacleLeft ? sidesDiff : obstacleRight ? -sidesDiff : 0);
-
-            const willStickOut = newC.some(c => {
-              const newColumn = getNewColPosition(c);
-              return newColumn < 0 || newColumn > fieldWidth - 1
-            });
-
-            if ((obstacleRight && obstacleLeft) || willStickOut) {
-              return prev;
-            }
-
-            const newBlock = newR.map(r => newC.map(c => [
-              prev[0][0][0] + r - (obstacleBelow ? sidesDiff : 0),
-              getNewColPosition(c),
-              true,
-            ]));
-
-            newBlock.forEach((row, i) => {
-              row.forEach((col, j) => {
-                newBlock[i][j][2] = prev[prev.length - 1 - j][i][2]
-                newBlock[i][j][3] = prev[prev.length - 1 - j][i][3]
-              })
-            })
-            return newBlock;
-          })
+          setCurrentBlock(prev => rotateBlock(prev, state, fieldWidth, fieldHeight))
           break;
         case 'Shift':
           setCurrentBlock(prev => {
             const prevTopLeftCoords = prev[0][0];
             if (!holdBlock) {
-              setHoldBlock(prev);
-              let newBlock = nextBlock;
-              newBlock = newBlock.map((r, ri) => r.map((c, ci) => [prevTopLeftCoords[0] + ri, prevTopLeftCoords[1] + ci, c[2], c[3]]));
               setNextBlock(getNewBlock(isExtended))
-              return newBlock
             }
-            let newBlock = holdBlock;
-            newBlock = newBlock.map((r, ri) => r.map((c, ci) => [prevTopLeftCoords[0] + ri, prevTopLeftCoords[1] + ci, c[2], c[3]]));
+            const newBlock = placeBlockAt(holdBlock ? holdBlock : nextBlock, prevTopLeftCoords);
             setHoldBlock(prev);
             return newBlock;
           })
@@ -228,7 +134,7 @@ const Field = () => {
     return () => {
       document.removeEventListener('keydown', handler)
     }
-  }, [state, gameOver, holdBlock, nextBlock, level, gameStarted, fieldWidth, fieldHeight, isExtended]);
+  }, [state, gameOver, holdBlock, nextBlock, gameStarted, fieldWidth, fieldHeight, isExtended, moveBlockDown]);
 
   const handleStart = useCallback(() => {
     setGameOver(false);
@@ -243,19 +149,7 @@ const Field = () => {
     <div className="flex gap-4">
       <div className="flex flex-col gap-4 w-40">
         <Preview block={holdBlock} title="HOLD"/>
-        <div className="flex-1 bg-amber-50 border border-amber-800 p-2 text-center">
-          <p>Lines removed:</p>
-          <p>{linesRemoved}</p>
-          <br/>
-          <p>Score:</p>
-          <p>{score}</p>
-          <br/>
-          <p>Level:</p>
-          <p>{level}</p>
-          <br/>
-          <p>Game speed:</p>
-          <p>{1000 - (900 - (level * 50))}</p>
-        </div>
+        <ScoreSection level={level} score={score} linesRemoved={linesRemoved} speed={1000 - (900 - (level * 50))}/>
       </div>
       <div className="relative flex flex-col gap-0.5">
         {gameOver || !gameStarted ? (
@@ -264,41 +158,40 @@ const Field = () => {
               {gameOver && <p className="text-2xl">Game over</p>}
               <label className="text-lg">
                 Level:
-                <select value={level} onChange={e => setLevel(Number(e.target.value))}  className="w-full border border-amber-800 rounded px-1 text-lg">
+                <select
+                  value={level}
+                  onChange={e => setLevel(Number(e.target.value))}
+                  className="w-full border border-amber-800 rounded px-1 text-lg"
+                >
                   {levels.map((_, i) => (<option key={i}>{i}</option>))}
                 </select>
               </label>
-              <label className="text-lg">
-                Field width:
-                <input
-                  type="number"
-                  name="width"
-                  className="w-full border border-amber-800 rounded px-1 text-lg"
-                  value={fieldWidth} onChange={e => setFieldWidth(Number(e.target.value))}
-                  min={7}
-                  max={30}
-                />
-              </label>
-              <label className="text-lg">
-                Field height:
-                <input
-                  type="number"
-                  name="height"
-                  className="w-full border border-amber-800 rounded px-1 text-lg"
-                  value={fieldHeight} onChange={e => setFieldHeight(Number(e.target.value))}
-                  min={10}
-                  max={60}
-                />
-              </label>
-              <label className="text-lg">
-                Extended:
-                <input
-                  type="checkbox"
-                  name="isExtended"
-                  className="ml-2"
-                  checked={isExtended} onChange={e => setIsExtended(e.target.checked)}
-                />
-              </label>
+              <Input
+                type="number"
+                name="width"
+                value={fieldWidth}
+                onChange={e => setFieldWidth(Number(e.target.value))}
+                min={7}
+                max={30}
+                label="Field width:"
+              />
+              <Input
+                type="number"
+                name="height"
+                value={fieldHeight}
+                onChange={e => setFieldHeight(Number(e.target.value))}
+                min={10}
+                max={60}
+                label="Field height:"
+              />
+              <Input
+                label="Extended:"
+                type="checkbox"
+                name="isExtended"
+                className="ml-2"
+                checked={isExtended}
+                onChange={e => setIsExtended(e.target.checked)}
+              />
             </div>
             <button
               className="border border-amber-800 rounded px-4 py-1 bg-white"
@@ -321,14 +214,18 @@ const Field = () => {
               return (
                 <div
                   key={`col-${i}-${j}`}
-                  className={`w-7 h-7 border border-amber-800 ${blockPart?.[2] ? 'border-2 bg-amber-600' : ''} ${state[i][j] ? 'bg-amber-800' : ''}`}
+                  className={`w-7 h-7 border border-amber-800 ${
+                    blockPart?.[2] ? 'border-2 bg-amber-600' : ''
+                  } ${state[i][j] ? 'bg-amber-800' : ''}`}
                 />
               )
             })}
           </div>
         ))}
       </div>
-      <Preview block={nextBlock} title="NEXT BLOCK"/>
+      <div className="w-40">
+        <Preview block={nextBlock} title="NEXT BLOCK"/>
+      </div>
     </div>
   );
 };
