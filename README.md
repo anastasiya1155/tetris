@@ -8,6 +8,8 @@ Todo list:
 - center falling blocks on any field
 - draw shadow where block will fall
 
+[Demo](https://anastasiya1155.github.io/tetris/)
+
 ## Available Scripts
 
 In the project directory, you can run:
