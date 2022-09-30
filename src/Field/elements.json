@@ -10,12 +10,12 @@
   "triangle3": [
     [[0, 4, true, 1], [0, 5, false, 2]],
     [[1, 4, true, 3], [1, 5, true, 4]],
-    [[2, 4, true, 5], [1, 4, false, 6]]
+    [[2, 4, true, 5], [2, 5, false, 6]]
   ],
   "triangle4": [
     [[0, 4, false, 1], [0, 5, true, 2]],
     [[1, 4, true, 3], [1, 5, true, 4]],
-    [[2, 4, false, 5], [1, 4, true, 6]]
+    [[2, 4, false, 5], [2, 5, true, 6]]
   ],
   "line1": [
     [[0, 3, true, 1], [0, 4, true, 2], [0, 5, true, 3], [0, 6, true, 4]]

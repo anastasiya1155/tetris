@@ -1,6 +1,8 @@
-# Getting Started with Create React App
+# Tetris
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Todo list:
+- add ability to start from non-empty field
+- separate level and speed, so that initial speed could be set
 
 ## Available Scripts
 

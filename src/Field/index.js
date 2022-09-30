@@ -1,17 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import elements from './elements.json';
 import Preview from "./Preview";
 import { getNSizedArray } from "../utils/basicUtils";
 
-const w = 10;
-const h = 20;
-
 const levels = [
-  0, 5, 12, 20, 30, 45, 65, 90
+  0, 5, 12, 20, 30, 40, 50, 60, 70, 80, 90, 100
 ];
 
-const width = getNSizedArray(w);
-const height = getNSizedArray(h);
+const width = getNSizedArray(10);
+const height = getNSizedArray(20);
 
 const getNewElement = () => {
   const randIndex = Math.floor((Math.random())*(Object.keys(elements).length - 1));
@@ -19,9 +16,9 @@ const getNewElement = () => {
   return JSON.parse(nextElem);
 }
 
-const moveElementDown = (prev, state, setState, setGameOver, nextElement, setNextElement, setScore, setLinesRemoved, level) => {
+const moveElementDown = (prev, state, setState, setGameOver, nextElement, setNextElement, setScore, setLinesRemoved, level, fieldHeight) => {
   const obstacleBelow = prev.some((row) => row.some((col) =>
-    col[0] >= h - 1 ||
+    col[0] >= fieldHeight - 1 ||
     (state[col[0] + 1][col[1]] && col[2])
   ))
   if (obstacleBelow) {
@@ -64,20 +61,22 @@ const initialNextElement = getNewElement();
 const initialState = height.map(_ => [...width.map(_ => false)])
 
 const Field = () => {
-  // TODO: allow configuring field and initial level
   const [state, setState] = useState(initialState);
   const [currentElement, setCurrentElement] = useState(initialElement)
   const [gameOver, setGameOver] = useState(false);
+  const [gameStarted, setGameStarted] = useState(false);
   const [holdElement, setHoldElement] = useState(null);
   const [nextElement, setNextElement] = useState(initialNextElement);
   const [score, setScore] = useState(0);
   const [linesRemoved, setLinesRemoved] = useState(0);
   const [level, setLevel] = useState(1);
+  const [fieldWidth, setFieldWidth] = useState(10);
+  const [fieldHeight, setFieldHeight] = useState(20);
 
   useEffect(() => {
     const handler = () => {
-      if (!gameOver) {
-        setCurrentElement(prev => moveElementDown(prev, state, setState, setGameOver, nextElement, setNextElement, setScore, setLinesRemoved, level)[0]);
+      if (!gameOver && gameStarted) {
+        setCurrentElement(prev => moveElementDown(prev, state, setState, setGameOver, nextElement, setNextElement, setScore, setLinesRemoved, level, fieldHeight)[0]);
       }
     }
     const intervalId = setInterval(handler, 900 - (level * 50));
@@ -85,7 +84,7 @@ const Field = () => {
     return () => {
       clearInterval(intervalId);
     }
-  }, [state, gameOver, nextElement, level]);
+  }, [state, gameOver, nextElement, level, gameStarted, fieldHeight]);
 
   useEffect(() => {
     let levelByScore
@@ -95,12 +94,12 @@ const Field = () => {
         break;
       }
     }
-    setLevel(levelByScore >= 0 ? levelByScore + 1 : levels.length + 1);
+    setLevel(prev => levelByScore >= 0 ? Math.max(levelByScore + 1, prev) : levels.length + 1);
   }, [linesRemoved])
 
   useEffect(() => {
     const handler = e => {
-      if (gameOver) {
+      if (gameOver || !gameStarted) {
         return;
       }
       const key = e.key;
@@ -121,7 +120,7 @@ const Field = () => {
         case 'ArrowRight':
           setCurrentElement(prev => {
             const obstacleRight = prev.some((row) => row.some((col) =>
-              col[1] >= w - 1 ||
+              col[1] >= fieldWidth - 1 ||
               (state[col[0]][col[1] + 1] && col[2])
             ));
             if (!obstacleRight) {
@@ -133,15 +132,15 @@ const Field = () => {
         case 'ArrowDown':
           setScore(prev => prev + 100);
           setCurrentElement(prev => {
-            const [first, isNew] = moveElementDown(prev, state, setState, setGameOver, nextElement, setNextElement, setScore, setLinesRemoved, level);
+            const [first, isNew] = moveElementDown(prev, state, setState, setGameOver, nextElement, setNextElement, setScore, setLinesRemoved, level, fieldHeight);
             if (isNew) {
               return first;
             }
-            const [second, isNewElem] = moveElementDown(first, state, setState, setGameOver, nextElement, setNextElement, setScore, setLinesRemoved, level);
+            const [second, isNewElem] = moveElementDown(first, state, setState, setGameOver, nextElement, setNextElement, setScore, setLinesRemoved, level, fieldHeight);
             if (isNewElem) {
               return second;
             }
-            return moveElementDown(second, state, setState, setGameOver, nextElement, setNextElement, setScore, setLinesRemoved, level)[0];
+            return moveElementDown(second, state, setState, setGameOver, nextElement, setNextElement, setScore, setLinesRemoved, level, fieldHeight)[0];
           })
           break;
         case 'ArrowUp':
@@ -155,11 +154,11 @@ const Field = () => {
               (!isWide && diffRange.some(r => state[col[0]][col[1] - r]) && col[2])
             ));
             const obstacleRight = prev.some((row) => row.some((col) =>
-              (!isWide && col[1] >= w - 1) ||
+              (!isWide && col[1] >= fieldWidth - 1) ||
               (!isWide && diffRange.some(r => state[col[0]][col[1] + r]) && col[2])
             ));
             const obstacleBelow = prev.some((row) => row.some((col) =>
-              (isWide && diffRange.some(r => col[0] + r >= h - 1)) ||
+              (isWide && diffRange.some(r => col[0] + r >= fieldHeight - 1)) ||
               (isWide && diffRange.some(r => state[col[0] + r]?.[col[1]]) && col[2])
             ));
             const newR = getNSizedArray(prevWidth);
@@ -169,7 +168,7 @@ const Field = () => {
 
             const willStickOut = newC.some(c => {
               const newColumn = getNewColPosition(c);
-              return newColumn < 0 || newColumn > w - 1
+              return newColumn < 0 || newColumn > fieldWidth - 1
             });
 
             if ((obstacleRight && obstacleLeft) || willStickOut) {
@@ -216,7 +215,16 @@ const Field = () => {
     return () => {
       document.removeEventListener('keydown', handler)
     }
-  }, [state, gameOver, holdElement, nextElement, level]);
+  }, [state, gameOver, holdElement, nextElement, level, gameStarted, fieldWidth, fieldHeight]);
+
+  const handleStart = useCallback(() => {
+    setGameOver(false);
+    setHoldElement(null);
+    setCurrentElement(getNewElement());
+    setNextElement(getNewElement());
+    setState(getNSizedArray(fieldHeight).map(_ => [...getNSizedArray(fieldWidth).map(_ => false)]));
+    setGameStarted(true);
+  }, [fieldWidth, fieldHeight])
 
   return (
     <div className="flex gap-4">
@@ -237,20 +245,44 @@ const Field = () => {
         </div>
       </div>
       <div className="relative flex flex-col gap-0.5">
-        {gameOver ? (
+        {gameOver || !gameStarted ? (
           <div className="absolute top-0 bottom-0 left-0 right-0 backdrop-blur-sm text-3xl flex items-center justify-center flex-col gap-2">
-            Game over
+            <div className="w-32 flex flex-col gap-2">
+              {gameOver && <p className="text-2xl">Game over</p>}
+              <label className="text-lg">
+                Level:
+                <select value={level} onChange={e => setLevel(Number(e.target.value))}  className="w-full border border-amber-800 rounded px-1 text-lg">
+                  {levels.map((_, i) => (<option>{i}</option>))}
+                </select>
+              </label>
+              <label className="text-lg">
+                Field width:
+                <input
+                  type="number"
+                  name="width"
+                  className="w-full border border-amber-800 rounded px-1 text-lg"
+                  value={fieldWidth} onChange={e => setFieldWidth(Number(e.target.value))}
+                  min={7}
+                  max={30}
+                />
+              </label>
+              <label className="text-lg">
+                Field height:
+                <input
+                  type="number"
+                  name="height"
+                  className="w-full border border-amber-800 rounded px-1 text-lg"
+                  value={fieldHeight} onChange={e => setFieldHeight(Number(e.target.value))}
+                  min={10}
+                  max={60}
+                />
+              </label>
+            </div>
             <button
               className="border border-amber-800 rounded px-4 py-1"
-              onClick={() => {
-                setGameOver(false);
-                setHoldElement(null);
-                setCurrentElement(getNewElement());
-                setNextElement(getNewElement());
-                setState(height.map(_ => [...width.map(_ => false)]));
-              }}
+              onClick={handleStart}
             >
-              Restart
+              Start
             </button>
           </div>
         ) : null}
