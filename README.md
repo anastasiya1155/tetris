@@ -3,6 +3,10 @@
 Todo list:
 - add ability to start from non-empty field
 - separate level and speed, so that initial speed could be set
+- show 3 next blocks
+- add animation for removing rows
+- center falling blocks on any field
+- draw shadow where block will fall
 
 ## Available Scripts
 

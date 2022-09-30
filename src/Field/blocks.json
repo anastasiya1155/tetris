@@ -1,0 +1,184 @@
+{
+  "triangle1": [
+    [[0, 4, false, 1], [0, 5, true, 2], [0, 6, false, 3]],
+    [[1, 4, true, 4], [1, 5, true, 5], [1, 6, true, 6]]
+  ],
+  "triangle2": [
+    [[0, 4, true, 1], [0, 5, true, 2], [0, 6, true, 3]],
+    [[1, 4, false, 4], [1, 5, true, 5], [1, 6, false, 6]]
+  ],
+  "triangle3": [
+    [[0, 4, true, 1], [0, 5, false, 2]],
+    [[1, 4, true, 3], [1, 5, true, 4]],
+    [[2, 4, true, 5], [2, 5, false, 6]]
+  ],
+  "triangle4": [
+    [[0, 4, false, 1], [0, 5, true, 2]],
+    [[1, 4, true, 3], [1, 5, true, 4]],
+    [[2, 4, false, 5], [2, 5, true, 6]]
+  ],
+  "line1": [
+    [[0, 3, true, 1], [0, 4, true, 2], [0, 5, true, 3], [0, 6, true, 4]]
+  ],
+  "line2": [
+    [[0, 5, true, 1], [1, 5, true, 2], [2, 5, true, 3], [3, 5, true, 4]]
+  ],
+  "square": [
+    [[0, 4, true, 1], [0, 5, true, 2]],
+    [[1, 4, true, 3], [1, 5, true, 4]]
+  ],
+  "crook1": [
+    [[0, 4, true, 1], [0, 5, false, 2], [0, 6, false, 3]],
+    [[1, 4, true, 4], [1, 5, true, 5], [1, 6, true, 6]]
+  ],
+  "crook2": [
+    [[0, 4, false, 1], [0, 5, false, 2], [0, 6, true, 3]],
+    [[1, 4, true, 4], [1, 5, true, 5], [1, 6, true, 6]]
+  ],
+  "crook3": [
+    [[0, 4, true, 1], [0, 5, true, 2], [0, 6, true, 3]],
+    [[1, 4, false, 4], [1, 5, false, 5], [1, 6, true, 6]]
+  ],
+  "crook4": [
+    [[0, 4, true, 1], [0, 5, true, 2], [0, 6, true, 3]],
+    [[1, 4, true, 4], [1, 5, false, 5], [1, 6, false, 6]]
+  ],
+  "crook5": [
+    [[0, 4, true, 1], [0, 5, true, 2]],
+    [[1, 4, true, 3], [1, 5, false, 4]],
+    [[2, 4, true, 5], [2, 5, false, 6]]
+  ],
+  "crook6": [
+    [[0, 4, true, 1], [0, 5, false, 2]],
+    [[1, 4, true, 3], [1, 5, false, 4]],
+    [[2, 4, true, 5], [2, 5, true, 6]]
+  ],
+  "crook7": [
+    [[0, 4, true, 1], [0, 5, true, 2]],
+    [[1, 4, false, 3], [1, 5, true, 4]],
+    [[2, 4, false, 5], [2, 5, true, 6]]
+  ],
+  "crook8": [
+    [[0, 4, false, 1], [0, 5, true, 2]],
+    [[1, 4, false, 3], [1, 5, true, 4]],
+    [[2, 4, true, 5], [2, 5, true, 6]]
+  ],
+  "frog1": [
+    [[0, 4, true, 1], [0, 5, true, 2], [0, 6, false, 3]],
+    [[1, 4, false, 1], [1, 5, true, 2], [1, 6, true, 3]]
+  ],
+  "frog2": [
+    [[0, 4, false, 1], [0, 5, true, 2], [0, 6, true, 3]],
+    [[1, 4, true, 1], [1, 5, true, 2], [1, 6, false, 3]]
+  ],
+  "frog3": [
+    [[0, 4, true, 1], [0, 5, false, 2]],
+    [[1, 4, true, 3], [1, 5, true, 4]],
+    [[2, 4, false, 5], [2, 5, true, 6]]
+  ],
+  "frog4": [
+    [[0, 4, false, 1], [0, 5, true, 2]],
+    [[1, 4, true, 3], [1, 5, true, 4]],
+    [[2, 4, true, 5], [2, 5, false, 6]]
+  ],
+  "dot": [[[0, 5, true, 1]]],
+  "corner1": [
+    [[0, 4, true, 1], [0, 5, false, 2]],
+    [[1, 4, true, 3], [1, 5, true, 4]]
+  ],
+  "corner2": [
+    [[0, 4, false, 1], [0, 5, true, 2]],
+    [[1, 4, true, 3], [1, 5, true, 4]]
+  ],
+  "corner3": [
+    [[0, 4, true, 1], [0, 5, true, 2]],
+    [[1, 4, false, 3], [1, 5, true, 4]]
+  ],
+  "corner4": [
+    [[0, 4, true, 1], [0, 5, true, 2]],
+    [[1, 4, true, 3], [1, 5, false, 4]]
+  ],
+  "plus": [
+    [[0, 4, false, 1], [0, 5, true, 2], [0, 6, false, 3]],
+    [[1, 4, true, 4], [1, 5, true, 5], [1, 6, true, 6]],
+    [[2, 4, false, 7], [2, 5, true, 8], [2, 6, false, 9]]
+  ],
+  "cup1": [
+    [[0, 4, true, 1], [0, 5, false, 2], [0, 6, true, 3]],
+    [[1, 4, true, 4], [1, 5, true, 5], [1, 6, true, 6]]
+  ],
+  "cup2": [
+    [[0, 4, true, 1], [0, 5, true, 2], [0, 6, true, 3]],
+    [[1, 4, true, 4], [1, 5, false, 5], [1, 6, true, 6]]
+  ],
+  "cup3": [
+    [[0, 4, true, 1], [0, 5, true, 2]],
+    [[1, 4, true, 3], [1, 5, false, 4]],
+    [[2, 4, true, 5], [2, 5, true, 6]]
+  ],
+  "cup4": [
+    [[0, 4, true, 1], [0, 5, true, 2]],
+    [[1, 4, false, 3], [1, 5, true, 4]],
+    [[2, 4, true, 5], [2, 5, true, 6]]
+  ],
+  "t1": [
+    [[0, 4, true, 1], [0, 5, true, 2], [0, 6, true, 3]],
+    [[1, 4, false, 4], [1, 5, true, 5], [1, 6, false, 6]],
+    [[2, 4, false, 7], [2, 5, true, 8], [2, 6, false, 9]]
+  ],
+  "t2": [
+    [[0, 4, true, 1], [0, 5, false, 2], [0, 6, false, 3]],
+    [[1, 4, true, 4], [1, 5, true, 5], [1, 6, true, 6]],
+    [[2, 4, true, 7], [2, 5, false, 8], [2, 6, false, 9]]
+  ],
+  "t3": [
+    [[0, 4, true, 1], [0, 5, true, 2], [0, 6, true, 3]],
+    [[1, 4, false, 4], [1, 5, true, 5], [1, 6, false, 6]],
+    [[2, 4, false, 7], [2, 5, true, 8], [2, 6, false, 9]]
+  ],
+  "t4": [
+    [[0, 4, false, 1], [0, 5, false, 2], [0, 6, true, 3]],
+    [[1, 4, true, 4], [1, 5, true, 5], [1, 6, true, 6]],
+    [[2, 4, false, 7], [2, 5, false, 8], [2, 6, true, 9]]
+  ],
+  "cornerBig1": [
+    [[0, 4, true, 1], [0, 5, true, 2], [0, 6, true, 3]],
+    [[1, 4, true, 4], [1, 5, false, 5], [1, 6, false, 6]],
+    [[2, 4, true, 7], [2, 5, false, 8], [2, 6, false, 9]]
+  ],
+  "cornerBig2": [
+    [[0, 4, true, 1], [0, 5, true, 2], [0, 6, true, 3]],
+    [[1, 4, false, 4], [1, 5, false, 5], [1, 6, true, 6]],
+    [[2, 4, false, 7], [2, 5, false, 8], [2, 6, true, 9]]
+  ],
+  "cornerBig3": [
+    [[0, 4, false, 1], [0, 5, false, 2], [0, 6, true, 3]],
+    [[1, 4, false, 4], [1, 5, false, 5], [1, 6, true, 6]],
+    [[2, 4, true, 7], [2, 5, true, 8], [2, 6, true, 9]]
+  ],
+  "cornerBig4": [
+    [[0, 4, true, 1], [0, 5, false, 2], [0, 6, false, 3]],
+    [[1, 4, true, 4], [1, 5, false, 5], [1, 6, false, 6]],
+    [[2, 4, true, 7], [2, 5, true, 8], [2, 6, true, 9]]
+  ],
+  "snake1": [
+    [[0, 4, false, 1], [0, 5, true, 2], [0, 6, true, 3]],
+    [[1, 4, false, 4], [1, 5, true, 5], [1, 6, false, 6]],
+    [[2, 4, true, 7], [2, 5, true, 8], [2, 6, false, 9]]
+  ],
+  "snake2": [
+    [[0, 4, true, 1], [0, 5, false, 2], [0, 6, false, 3]],
+    [[1, 4, true, 4], [1, 5, true, 5], [1, 6, true, 6]],
+    [[2, 4, false, 7], [2, 5, false, 8], [2, 6, true, 9]]
+  ],
+  "snake3": [
+    [[0, 4, true, 1], [0, 5, true, 2], [0, 6, false, 3]],
+    [[1, 4, false, 4], [1, 5, true, 5], [1, 6, false, 6]],
+    [[2, 4, false, 7], [2, 5, true, 8], [2, 6, true, 9]]
+  ],
+  "snake4": [
+    [[0, 4, false, 1], [0, 5, false, 2], [0, 6, true, 3]],
+    [[1, 4, true, 4], [1, 5, true, 5], [1, 6, true, 6]],
+    [[2, 4, true, 7], [2, 5, false, 8], [2, 6, false, 9]]
+  ]
+}
