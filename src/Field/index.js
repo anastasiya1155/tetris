@@ -52,6 +52,7 @@ const Field = () => {
       })
       if (isFieldFull(state)) {
         setGameOver(true);
+        setLevel(1);
       }
       setNextBlock(getNewBlock(isExtended));
       return [nextBlock, true];
@@ -143,6 +144,8 @@ const Field = () => {
     setNextBlock(getNewBlock());
     setState(getNSizedArray(fieldHeight).map(_ => [...getNSizedArray(fieldWidth).map(_ => false)]));
     setGameStarted(true);
+    setLinesRemoved(0);
+    setScore(0);
   }, [fieldWidth, fieldHeight])
 
   return (
