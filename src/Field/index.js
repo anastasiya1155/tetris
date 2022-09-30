@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import elements from './elements.json';
 import Preview from "./Preview";
+import { getNSizedArray } from "../utils/basicUtils";
 
 const w = 10;
 const h = 20;
@@ -9,8 +10,8 @@ const levels = [
   0, 5, 12, 20, 30, 45, 65, 90
 ];
 
-const width = Array.from(new Array(w).keys());
-const height = Array.from(new Array(h).keys());
+const width = getNSizedArray(w);
+const height = getNSizedArray(h);
 
 const getNewElement = () => {
   const randIndex = Math.floor((Math.random())*(Object.keys(elements).length - 1));
@@ -104,6 +105,7 @@ const Field = () => {
       }
       const key = e.key;
       switch (key) {
+        // TODO: add space handler (drops immediately)
         case 'ArrowLeft':
           setCurrentElement(prev => {
             const obstacleLeft = prev.some((row) => row.some((col) =>
@@ -144,29 +146,41 @@ const Field = () => {
           break;
         case 'ArrowUp':
           setCurrentElement(prev => {
-            // TODO: limit rotation if there are obstacles or move element away
-            // const obstacleLeft = prev.some((row) => row.some((col) =>
-            //   col[1] <= 0 ||
-            //   (state[col[0]][col[1] - 1] && col[2])
-            // ));
-            // const obstacleRight = prev.some((row) => row.some((col) =>
-            //   col[1] >= w - 1 ||
-            //   (state[col[0]][col[1] + 1] && col[2])
-            // ));
-            // const obstacleBelow = prev.some((row) => row.some((col) =>
-            //   col[0] >= h - 1 ||
-            //   (state[col[0] + 1][col[1]] && col[2])
-            // ));
-            // if (obstacleRight && obstacleLeft) {
-            //   return;
-            // }
-            // const newR = Array.from(new Array(prev[0].length).keys());
-            // const newC = Array.from(new Array(prev.length).keys());
-            // const newElem = newR.map(r => newC.map(c => [prev[0][0][0] + r + Number(obstacleBelow), prev[0][0][1] + c + (obstacleLeft ? 1 : obstacleRight ? -1 : 0), true, ]));
+            const prevHeight = prev.length;
+            const prevWidth = prev[0].length;
+            const isWide = prevWidth - prevHeight > 0;
+            const sidesDiff = Math.abs(prevWidth - prevHeight);
+            const diffRange = sidesDiff ? getNSizedArray(sidesDiff, true) : [];
+            const obstacleLeft = prev.some((row) => row.some((col) =>
+              (!isWide && diffRange.some(r => state[col[0]][col[1] - r]) && col[2])
+            ));
+            const obstacleRight = prev.some((row) => row.some((col) =>
+              (!isWide && col[1] >= w - 1) ||
+              (!isWide && diffRange.some(r => state[col[0]][col[1] + r]) && col[2])
+            ));
+            const obstacleBelow = prev.some((row) => row.some((col) =>
+              (isWide && diffRange.some(r => col[0] + r >= h - 1)) ||
+              (isWide && diffRange.some(r => state[col[0] + r]?.[col[1]]) && col[2])
+            ));
+            const newR = getNSizedArray(prevWidth);
+            const newC = getNSizedArray(prevHeight);
 
-            const newR = Array.from(new Array(prev[0].length).keys());
-            const newC = Array.from(new Array(prev.length).keys());
-            const newElem = newR.map(r => newC.map(c => [prev[0][0][0] + r, prev[0][0][1] + c, true, ]));
+            const getNewColPosition = (c) => prev[0][0][1] + c + (obstacleLeft ? sidesDiff : obstacleRight ? -sidesDiff : 0);
+
+            const willStickOut = newC.some(c => {
+              const newColumn = getNewColPosition(c);
+              return newColumn < 0 || newColumn > w - 1
+            });
+
+            if ((obstacleRight && obstacleLeft) || willStickOut) {
+              return prev;
+            }
+
+            const newElem = newR.map(r => newC.map(c => [
+              prev[0][0][0] + r - (obstacleBelow ? sidesDiff : 0),
+              getNewColPosition(c),
+              true,
+            ]));
 
             newElem.forEach((row, i) => {
               row.forEach((col, j) => {
