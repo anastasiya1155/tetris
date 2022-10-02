@@ -54,7 +54,6 @@ const Field = () => {
   ) => {
     const obstacleBelow = isObstacleBelow(block, state, fieldHeight);
     if (obstacleBelow) {
-      console.log('here')
       setState(prevState => addBlockToField(block, prevState));
       setState(prevState => {
         const { newState, diff } = removeFullRowsFromField(prevState);
@@ -253,7 +252,7 @@ const Field = () => {
         ) : null}
         {state.map((row, i) => (
           <div key={`row-${i}`} className={`flex gap-0.5 ${i === 1 || i === 0 ? 'hidden': ''}`}>
-            {i}{row.map((col, j) => {
+            {row.map((col, j) => {
               let blockPart;
               for (let k = 0; k < currentBlock.length; k++) {
                 blockPart = currentBlock[k].find(c => c[0] === i && c[1] === j)
