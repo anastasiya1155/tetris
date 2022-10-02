@@ -4,7 +4,15 @@ import Preview from "./Preview";
 import { getNSizedArray } from "../utils/basicUtils";
 import Input from "../Input";
 import ScoreSection from "./ScoreSection";
-import { isObstacleBelow, moveDown, moveLeft, moveRight, placeBlockAt, rotateBlock } from "../utils/blockUtils";
+import {
+  getBlockShadow,
+  isObstacleBelow,
+  moveDown,
+  moveLeft,
+  moveRight,
+  placeBlockAt,
+  rotateBlock
+} from "../utils/blockUtils";
 import { addBlockToField, isFieldFull, removeFullRowsFromField } from "../utils/fieldUtils";
 
 const levels = [
@@ -23,6 +31,7 @@ const getNewBlock = (isExtended) => {
 const initialBlock = getNewBlock();
 const initialNextBlock = getNewBlock();
 const initialState = height.map(_ => [...width.map(_ => false)])
+const initialBlockShadow = getBlockShadow(initialBlock, initialState);
 
 const Field = () => {
   const [state, setState] = useState(initialState);
@@ -38,17 +47,20 @@ const Field = () => {
   const [level, setLevel] = useState(1);
   const [fieldWidth, setFieldWidth] = useState(10);
   const [fieldHeight, setFieldHeight] = useState(20);
+  const [blockShadow, setBlockShadow] = useState(initialBlockShadow);
 
   const moveBlockDown = useCallback((
     block,
   ) => {
     const obstacleBelow = isObstacleBelow(block, state, fieldHeight);
     if (obstacleBelow) {
+      console.log('here')
       setState(prevState => addBlockToField(block, prevState));
       setState(prevState => {
         const { newState, diff } = removeFullRowsFromField(prevState);
         setLinesRemoved(p => p + diff);
         setScore(p => p + (diff * 1000 * level));
+        setBlockShadow(getBlockShadow(nextBlock, newState))
         return newState;
       })
       if (isFieldFull(state)) {
@@ -59,7 +71,7 @@ const Field = () => {
       return [nextBlock, true];
     }
     return [moveDown(block), false];
-  }, [state, nextBlock, level, fieldHeight, isExtended])
+  }, [state, nextBlock, level, fieldHeight, isExtended]);
 
   useEffect(() => {
     const handler = () => {
@@ -67,7 +79,7 @@ const Field = () => {
         setCurrentBlock(prev => moveBlockDown(prev)[0]);
       }
     }
-    const intervalId = setInterval(handler, 900 - (level * 50));
+    const intervalId = setInterval(handler, 1200 - (level * 50));
     if (isPaused) {
       clearInterval(intervalId);
     }
@@ -103,10 +115,18 @@ const Field = () => {
       switch (key) {
         // TODO: add space handler (drops immediately)
         case 'ArrowLeft':
-          setCurrentBlock(prev => moveLeft(prev, state));
+          setCurrentBlock(prev => {
+            const newBlock = moveLeft(prev, state)
+            setBlockShadow(getBlockShadow(newBlock, state))
+            return newBlock;
+          });
           break;
         case 'ArrowRight':
-          setCurrentBlock(prev => moveRight(prev, state, fieldWidth));
+          setCurrentBlock(prev => {
+            const newBlock = moveRight(prev, state, fieldWidth)
+            setBlockShadow(getBlockShadow(newBlock, state))
+            return newBlock;
+          });
           break;
         case 'ArrowDown':
           setScore(prev => prev + 100);
@@ -123,7 +143,11 @@ const Field = () => {
           })
           break;
         case 'ArrowUp':
-          setCurrentBlock(prev => rotateBlock(prev, state, fieldWidth, fieldHeight))
+          setCurrentBlock(prev => {
+            const newBlock = rotateBlock(prev, state, fieldWidth, fieldHeight);
+            setBlockShadow(getBlockShadow(newBlock, state));
+            return newBlock;
+          })
           break;
         case 'Shift':
           setCurrentBlock(prev => {
@@ -131,9 +155,16 @@ const Field = () => {
             if (!holdBlock) {
               setNextBlock(getNewBlock(isExtended))
             }
-            const newBlock = placeBlockAt(holdBlock ? holdBlock : nextBlock, prevTopLeftCoords);
+            const blockToPlace = holdBlock ? holdBlock : nextBlock;
+            const widthDiff = blockToPlace[0].length - prev[0].length;
+            const newBlock = placeBlockAt(blockToPlace, [prevTopLeftCoords[0], prevTopLeftCoords[1] - (widthDiff > 0 ? widthDiff : 0)]);
             setHoldBlock(prev);
             return newBlock;
+          })
+          break;
+        case " ":
+          setCurrentBlock(() => {
+            return moveBlockDown(blockShadow)[0];
           })
           break;
         default:
@@ -145,14 +176,17 @@ const Field = () => {
     return () => {
       document.removeEventListener('keydown', handler)
     }
-  }, [state, gameOver, holdBlock, nextBlock, gameStarted, fieldWidth, fieldHeight, isExtended, moveBlockDown, isPaused]);
+  }, [state, gameOver, holdBlock, nextBlock, gameStarted, fieldWidth, fieldHeight, isExtended, moveBlockDown, isPaused, blockShadow]);
 
   const handleStart = useCallback(() => {
+    const newBlock = getNewBlock()
+    const newState = getNSizedArray(fieldHeight).map(_ => [...getNSizedArray(fieldWidth).map(_ => false)])
     setGameOver(false);
     setHoldBlock(null);
-    setCurrentBlock(getNewBlock());
+    setCurrentBlock(newBlock);
+    setBlockShadow(getBlockShadow(newBlock, newState));
     setNextBlock(getNewBlock());
-    setState(getNSizedArray(fieldHeight).map(_ => [...getNSizedArray(fieldWidth).map(_ => false)]));
+    setState(newState);
     setGameStarted(true);
     setLinesRemoved(0);
     setScore(0);
@@ -219,7 +253,7 @@ const Field = () => {
         ) : null}
         {state.map((row, i) => (
           <div key={`row-${i}`} className={`flex gap-0.5 ${i === 1 || i === 0 ? 'hidden': ''}`}>
-            {row.map((col, j) => {
+            {i}{row.map((col, j) => {
               let blockPart;
               for (let k = 0; k < currentBlock.length; k++) {
                 blockPart = currentBlock[k].find(c => c[0] === i && c[1] === j)
@@ -227,11 +261,18 @@ const Field = () => {
                   break;
                 }
               }
+              let shadowPart;
+              for (let k = 0; k < blockShadow.length; k++) {
+                shadowPart = blockShadow[k].find(c => c[0] === i && c[1] === j)
+                if (shadowPart) {
+                  break;
+                }
+              }
               return (
                 <div
                   key={`col-${i}-${j}`}
                   className={`w-7 h-7 border border-amber-800 ${
-                    blockPart?.[2] ? 'border-2 bg-amber-600' : ''
+                    blockPart?.[2] ? 'border-2 bg-amber-600' : shadowPart?.[2] ? 'border-2' : ''
                   } ${state[i][j] ? 'bg-amber-800' : ''}`}
                 />
               )
@@ -246,7 +287,6 @@ const Field = () => {
           <button
             className="w-24 h-24 bg-amber-50 text-5xl bolder rounded border border-amber-800 flex items-center focus:outline-none justify-center"
             onClick={(e) => {
-              console.log('here')
               setIsPaused(prev => !prev)
               e.target.blur();
             }}

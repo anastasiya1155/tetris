@@ -54,6 +54,7 @@ export const rotateBlock = (block, state, fieldWidth, fieldHeight) => {
   });
 
   if ((obstacleRight && obstacleLeft) || willStickOut) {
+    console.log('cannot rotate', 'obstacleRight', obstacleRight, 'obstacleLeft', obstacleLeft, 'willStickOut', willStickOut)
     return block;
   }
 
@@ -78,3 +79,51 @@ export const isObstacleBelow = (block, state, fieldHeight) => block.some((row) =
 ))
 
 export const placeBlockAt = (block, topLeft) => block.map((r, ri) => r.map((c, ci) => [topLeft[0] + ri, topLeft[1] + ci, c[2], c[3]]))
+
+export const getBlockBottom = block => {
+  const result = [];
+  for (let i = block.length - 1; i >= 0; i--) {
+    for (let j = 0; j < block[i].length; j++){
+      if (block[i][j][2] && !result[j]) {
+        result[j] = block[i][j];
+      }
+    }
+  }
+  return result;
+}
+
+export const getBlockShadow = (block, state) => {
+  const blockBottom = getBlockBottom(block);
+  const possibleStops = blockBottom.map(cell => {
+    const row = state.findIndex((r, i) => r[cell[1]] && i >= cell[0]);
+    return [cell, row >= 0 ? row : state.length];
+  });
+  const bottom = possibleStops.reduce((prev, curr) => {
+    const prevCellRow = prev[0][0];
+    const currCellRow = curr[0][0];
+    const prevObstacleRow = prev[1];
+    const currObstacleRow = curr[1];
+
+    if (prevObstacleRow < currObstacleRow) {
+      // prev [[6,8,true,1],18], curr [[8,9,true,6],19]
+      if ((prevCellRow - currCellRow) < (prevObstacleRow - currObstacleRow)) {
+        return curr;
+      }
+      return prev;
+    }
+    if (prevObstacleRow === currObstacleRow) {
+      if (prevCellRow < currCellRow) {
+        return curr;
+      }
+      return prev;
+    }
+    // prev: [[5, 0, true], 19], curr [[3, 1, true], 18]
+    if ((prevCellRow - currCellRow) > (prevObstacleRow - currObstacleRow)) {
+      return prev;
+    }
+    return curr;
+  }, [possibleStops[0]]);
+  let moveDownTo = bottom[1] - bottom[0][0] - 1;
+
+  return block.map((r) => r.map((c) => [c[0] + moveDownTo, c[1], c[2], c[3]]))
+}

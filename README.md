@@ -6,7 +6,6 @@ Todo list:
 - show 3 next blocks
 - add animation for removing rows
 - center falling blocks on any field
-- draw shadow where block will fall
 - save high score
 
 [Demo](https://anastasiya1155.github.io/tetris/)
