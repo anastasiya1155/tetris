@@ -64,7 +64,6 @@ const Field = () => {
       })
       if (isFieldFull(state)) {
         setGameOver(true);
-        setLevel(1);
       }
       setNextBlock(getNewBlock(isExtended));
       return [nextBlock, true];
@@ -189,6 +188,7 @@ const Field = () => {
     setGameStarted(true);
     setLinesRemoved(0);
     setScore(0);
+    setLevel(1);
   }, [fieldWidth, fieldHeight])
 
   return (
