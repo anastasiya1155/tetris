@@ -2,8 +2,8 @@ import { getNSizedArray } from "./basicUtils";
 
 export const addBlockToField = (block, state) => {
   const newState = [...state.map(row => [...row])]
-  block.forEach((row) => row.forEach((col) => {
-    newState[col[0]][col[1]] = newState[col[0]][col[1]] || col[2]
+  block.forEach((row) => row.forEach((cell) => {
+    newState[cell[0]][cell[1]] = newState[cell[0]]?.[cell[1]] || cell[2]
   }))
   return newState;
 }

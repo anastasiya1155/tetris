@@ -112,7 +112,6 @@ const Field = () => {
         return;
       }
       switch (key) {
-        // TODO: add space handler (drops immediately)
         case 'ArrowLeft':
           setCurrentBlock(prev => {
             const newBlock = moveLeft(prev, state)
