@@ -199,7 +199,7 @@ const Field = () => {
       </div>
       <div className="relative flex flex-col gap-0.5">
         {gameOver || !gameStarted || isPaused ? (
-          <div className="absolute top-0 bottom-0 left-0 right-0 backdrop-blur-sm text-3xl flex items-center justify-center flex-col gap-2">
+          <div className="absolute top-0 bottom-0 left-0 right-0 backdrop-blur-sm text-3xl flex items-center justify-center flex-col gap-2 bg-amber-50 bg-opacity-40">
             {(gameOver || !gameStarted) && (
               <>
                 <div className="w-32 flex flex-col gap-2">
