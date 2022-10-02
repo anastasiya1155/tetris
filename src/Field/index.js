@@ -158,6 +158,7 @@ const Field = () => {
             const widthDiff = blockToPlace[0].length - prev[0].length;
             const newBlock = placeBlockAt(blockToPlace, [prevTopLeftCoords[0], prevTopLeftCoords[1] - (widthDiff > 0 ? widthDiff : 0)]);
             setHoldBlock(prev);
+            setBlockShadow(getBlockShadow(newBlock, state));
             return newBlock;
           })
           break;
