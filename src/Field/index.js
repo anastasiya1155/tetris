@@ -16,7 +16,7 @@ import {
 import { addBlockToField, isFieldFull, removeFullRowsFromField } from "../utils/fieldUtils";
 
 const levels = [
-  0, 5, 12, 20, 30, 40, 50, 60, 70, 80, 90, 100
+  0, 5, 12, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130
 ];
 
 const width = getNSizedArray(10);
@@ -78,7 +78,7 @@ const Field = () => {
         setCurrentBlock(prev => moveBlockDown(prev)[0]);
       }
     }
-    const intervalId = setInterval(handler, 1200 - (level * 50));
+    const intervalId = setInterval(handler, 800 - (level * 50));
     if (isPaused) {
       clearInterval(intervalId);
     }
@@ -196,7 +196,7 @@ const Field = () => {
     <div className="flex gap-4">
       <div className="flex flex-col gap-4 w-40">
         <Preview block={holdBlock} title="HOLD"/>
-        <ScoreSection level={level} score={score} linesRemoved={linesRemoved} speed={1000 - (900 - (level * 50))}/>
+        <ScoreSection level={level} score={score} linesRemoved={linesRemoved} speed={1000 - (800 - (level * 50))}/>
       </div>
       <div className="relative flex flex-col gap-0.5">
         {gameOver || !gameStarted || isPaused ? (
